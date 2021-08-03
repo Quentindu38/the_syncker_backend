@@ -1,15 +1,17 @@
 const router = require("express").Router();
 const path = require("path");
 const fs = require("fs");
-const syncedDir = "./sync";
+const config = require("../config/config");
 const multer = require("multer");
-const asynHandler = require("async-handler");
 const { v4: uuidv4 } = require("uuid");
 const dirTree = require("directory-tree");
 
+const tmpFolder = config.tmpFolder;
+const syncedDir = config.syncedDir;
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./upload");
+    cb(null, tmpFolder);
   },
   filename: (req, file, cb) => {
     cb(null, "" + uuidv4());
@@ -19,7 +21,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 router.post("/upload", upload.single("file"), async (req, res, next) => {
-  // req.body.path = path.normalize(req.body.path || "");
   const requestData = req.body;
 
   if(requestData.path == '.') return;
@@ -80,8 +81,8 @@ router.get("/handshake", (req, res, next) => {
     fs.mkdirSync(syncedDir);
   }
 
-  if (!fs.existsSync("./upload")) {
-    fs.mkdirSync("./upload");
+  if (!fs.existsSync(tmpFolder)) {
+    fs.mkdirSync(tmpFolder);
   }
 
   return res.status(200).json({ message: "alive" });
@@ -109,19 +110,19 @@ router.get("/getTree", (req, res, next) => {
     }
   }
 
-  router.get("/getFile", (req, res, next) => {
-    const requestData = req.query;
-
-    const fullPath = path.normalize(syncedDir + requestData.filePath);
-    if (fs.existsSync(fullPath)) {
-      return res.sendFile(path.resolve(fullPath));
-    } else {
-      return res.status(500).json({message: "file not found"});
-    }
-  });
-
   recurse(dirTree(path.normalize(syncedDir)));
   res.json(paths);
+});
+
+router.get("/getFile", (req, res, next) => {
+  const requestData = req.query;
+
+  const fullPath = path.normalize(syncedDir + requestData.filePath);
+  if (fs.existsSync(fullPath)) {
+    return res.sendFile(path.resolve(fullPath));
+  } else {
+    return res.status(500).json({message: "file not found"});
+  }
 });
 
 module.exports = router;
