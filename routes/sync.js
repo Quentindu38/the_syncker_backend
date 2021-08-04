@@ -5,6 +5,7 @@ const config = require("../config/config");
 const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
 const dirTree = require("directory-tree");
+const shouldBeAuthorized = require("../middlewares/auth");
 
 const tmpFolder = config.tmpFolder;
 const syncedDir = config.syncedDir;
@@ -20,7 +21,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.post("/upload", upload.single("file"), async (req, res, next) => {
+router.post("/upload", shouldBeAuthorized, upload.single("file"), async (req, res, next) => {
   const requestData = req.body;
 
   if(requestData.path == '.') return;

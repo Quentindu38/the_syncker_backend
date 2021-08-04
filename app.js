@@ -1,17 +1,24 @@
-var express = require('express');
-var logger = require('morgan');
+process.env.NODE_ENV = 'production';
+const express = require('express');
+const syncRouter = require('./routes/sync');
+const getImageRouter = require('./routes/getImages');
+const issueTokenRouter = require('./routes/auth');
+const helmet = require('helmet');
+const compression = require('compression');
 
-var indexRouter = require('./routes/index');
-var syncRouter = require('./routes/sync');
-var getImageRouter = require('./routes/getImages');
 
-var app = express();
+const app = express();
 
-// app.use(logger('dev'));
+app.use(helmet());
+app.use(compression());
 app.use(express.json());
 
-app.use('/', indexRouter);
+
 app.use('/sync', syncRouter);
 app.use('/getImages', getImageRouter);
+app.use('/issueToken', issueTokenRouter);
+app.use('/*', (req, res, next) => {
+  return res.json({state:"syncker is running..."});
+});
 
 module.exports = app;
