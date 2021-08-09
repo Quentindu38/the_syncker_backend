@@ -20,7 +20,8 @@ router.get("/", (req, res, next) => {
     
     if(fileStat.isDirectory()) {
       const regex = /image/;
-      const host = req.get('host')+req.baseUrl;
+      const host = req.protocol+"://"+req.get('host');
+
       const files = fs.readdirSync(fullPath).filter(found => {
         const xPath = path.join(fullPath, found);
         const stat = fs.statSync(xPath);
@@ -29,13 +30,15 @@ router.get("/", (req, res, next) => {
 
         return isImageFile;
       });
+
       const responseData = [];
 
-      const [topSku, sku, color] = requestData.path.split("/").filter(p => p!= "");
+      const [topSku, sku, color] = requestData.path.split(/(\\|\/)/).filter(p => p!= "" && p!="/" && p!="\\");
 
       files.forEach(file => {
+        const imageUrl = (host+path.join(requestData.path, file)).replace(/\s/gi, "%20").replace(/\\/gi, "/");
         responseData.push({
-          image: host+"?path="+path.join(requestData.path, file),
+          image: imageUrl,
           sku: sku,
           color: color,
         });

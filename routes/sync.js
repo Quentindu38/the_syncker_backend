@@ -24,7 +24,9 @@ const upload = multer({ storage: storage });
 router.post("/upload", shouldBeAuthorized, upload.single("file"), async (req, res, next) => {
   const requestData = req.body;
 
-  if(requestData.path == '.') return;
+  if(requestData.path == '.' || requestData.path == '..') {
+    return;
+  };
 
   const fullPath = path.normalize(syncedDir + requestData.path);
 
