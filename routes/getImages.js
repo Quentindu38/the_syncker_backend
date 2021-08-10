@@ -3,7 +3,7 @@ const path = require("path");
 const config = require('../config/config');
 const fs = require("fs");
 const mime = require("mime");
-const syncedDir = config.syncedDir;
+const syncedDir = config.syncedDir.replace(/\\/gi, "/");
 
 router.get("/", (req, res, next) => {
   const requestData = req.query;
@@ -14,7 +14,7 @@ router.get("/", (req, res, next) => {
   }
   
   
-  const fullPath = path.normalize(syncedDir + requestData.path);
+  const fullPath = path.normalize(syncedDir + requestData.path).replace(/\\/gi, "/");
   if (fs.existsSync(fullPath)) {
     const fileStat = fs.statSync(fullPath);
     

@@ -7,8 +7,8 @@ const { v4: uuidv4 } = require("uuid");
 const dirTree = require("directory-tree");
 const shouldBeAuthorized = require("../middlewares/auth");
 
-const tmpFolder = config.tmpFolder;
-const syncedDir = config.syncedDir;
+const tmpFolder = config.tmpFolder.replace(/\\/gi, "/");
+const syncedDir = config.syncedDir.replace(/\\/gi, "/");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -28,7 +28,7 @@ router.post("/upload", shouldBeAuthorized, upload.single("file"), async (req, re
     return;
   };
 
-  const fullPath = path.normalize(syncedDir + requestData.path);
+  const fullPath = path.normalize(syncedDir + requestData.path).replace(/\\/gi, "/");
 
   if (requestData.event == "unlink") {
     if (fs.existsSync(fullPath)) {
@@ -67,7 +67,7 @@ router.post("/upload", shouldBeAuthorized, upload.single("file"), async (req, re
 
 router.post("/autoCheck", (req, res, next) => {
   const requestData = req.body;
-  const fullPath = path.normalize(syncedDir + requestData.path);
+  const fullPath = path.normalize(syncedDir + requestData.path).replace(/\\/gi, "/");
 
   if (fs.existsSync(fullPath)) {
     const currentFileStat = fs.statSync(fullPath);
@@ -95,6 +95,7 @@ router.get("/getTree", (req, res, next) => {
   const paths = [];
   function recurse(pathObject) {
     if(!pathObject) return;
+
     if (
       pathObject.hasOwnProperty("children") &&
       pathObject.children.length > 0
@@ -104,10 +105,11 @@ router.get("/getTree", (req, res, next) => {
       });
     } else {
       if (pathObject.hasOwnProperty("path")) {
-        pathObject.path = pathObject.path.replace(
-          path.normalize(syncedDir),
+        pathObject.path = pathObject.path.replace(/\\/gi, "/").replace(
+          path.normalize(syncedDir).replace(/\\/gi, "/"),
           ""
         );
+        
         paths.push(pathObject);
       }
     }
@@ -120,7 +122,7 @@ router.get("/getTree", (req, res, next) => {
 router.get("/getFile", (req, res, next) => {
   const requestData = req.query;
 
-  const fullPath = path.normalize(syncedDir + requestData.filePath);
+  const fullPath = path.normalize(syncedDir + requestData.filePath).replace(/\\/gi, "/");
   if (fs.existsSync(fullPath)) {
     return res.sendFile(path.resolve(fullPath));
   } else {

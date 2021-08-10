@@ -15,7 +15,7 @@ app.use(helmet());
 app.use(compression());
 app.use(express.json());
 
-app.use(express.static(config.syncedDir));
+app.use(express.static(config.syncedDir.replace(/\\/gi, "/")));
 
 app.use('/sync', syncRouter);
 app.use('/getImages', getImageRouter);
