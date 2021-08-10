@@ -51,7 +51,7 @@ router.get("/", (req, res, next) => {
     }
 
   } else {
-    return res.status(500).json({message: "file not found"});
+    return res.status(500).json({message: "<"+fullPath+"> not found"});
   }
 });
 
