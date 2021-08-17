@@ -6,12 +6,10 @@ const helmet = require('helmet');
 const compression = require('compression');
 const cors = require('cors');
 const config = require('./config/config');
-const logger = require('morgan');
 
 
 const app = express();
 
-// app.use(logger("dev"));
 app.use(cors());
 app.use(helmet());
 app.use(compression());
