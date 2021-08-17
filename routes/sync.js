@@ -33,50 +33,40 @@ router.post("/upload", shouldBeAuthorized, upload.single("file"), async (req, re
   if (requestData.event == "unlink") {
     if (fs.existsSync(fullPath)) {
       await fs.unlinkSync(fullPath);
-      return res.status(200).json({ message: "file unlinked" });
+      return res.status(200).json({ message: requestData.path+" unlinked" });
     }
   }
 
   if (requestData.event == "unlinkDir") {
     if (fs.existsSync(fullPath)) {
       await fs.rmdirSync(fullPath, { recursive: true });
-      return res.status(200).json({ message: "folder unlinked" });
+      return res.status(200).json({ message: requestData.path+" unlinked" });
     }
   }
 
   if (requestData.event == "addDir") {
     if (!fs.existsSync(fullPath)) {
       fs.mkdirSync(fullPath, { recursive: true });
-      return res.status(200).json({ message: "folder created" });
+      return res.status(200).json({ message: requestData.path+" created" });
     }
   }
 
-  if (requestData.event == "add") {
+  if (requestData.event == "add" || requestData.event == "change") {
     const dirPath = path.dirname(fullPath);
 
     if (!fs.existsSync(dirPath)) {
       fs.mkdirSync(dirPath, { recursive: true });
     }
 
-    fs.renameSync(req.file.path, fullPath);
-    return res.status(200).json({ message: "file created" });
-  }
-
-  return res.status(200).json({ message: "something went wrong" });
-});
-
-router.post("/autoCheck", (req, res, next) => {
-  const requestData = req.body;
-  const fullPath = path.normalize(syncedDir + requestData.path).replace(/\\/gi, "/");
-
-  if (fs.existsSync(fullPath)) {
-    const currentFileStat = fs.statSync(fullPath);
-    if(currentFileStat.size >= requestData.size) {
-      return res.status(200).json({ message: "up to date" });
+    try {
+      fs.renameSync(req.file.path, fullPath);
+      return res.status(200).json({ message: requestData.path+" created" });
+    } catch (error) {
+      fs.rmSync(req.file.path);
     }
   }
 
-  return res.status(202).json({ message: "not up to date" });
+  return res.status(200).json({ message: "OK: "+ requestData.path});
 });
 
 router.get("/handshake", (req, res, next) => {
@@ -84,6 +74,10 @@ router.get("/handshake", (req, res, next) => {
     fs.mkdirSync(syncedDir);
   }
 
+  /**
+   * flush the tmp folder
+   */
+  fs.rmSync(tmpFolder, {recursive: true, force: true});
   if (!fs.existsSync(tmpFolder)) {
     fs.mkdirSync(tmpFolder);
   }
@@ -105,6 +99,8 @@ router.get("/getTree", (req, res, next) => {
       });
     } else {
       if (pathObject.hasOwnProperty("path")) {
+        const pathStat = fs.statSync(pathObject.path);
+        pathObject.stat = pathStat;
         pathObject.path = pathObject.path.replace(/\\/gi, "/").replace(
           path.normalize(syncedDir).replace(/\\/gi, "/"),
           ""
